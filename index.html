@@ -1,29 +1,66 @@
-<!doctype html>
-<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kartu Anggota Samandiman</title>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kartu Anggota Digital • Samandiman</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f2f0eb;font-family:Arial,sans-serif;color:#171717}
-.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.card{width:min(430px,100%);background:#111;border-radius:22px;overflow:hidden;box-shadow:0 12px 35px #0002;color:#fff}
+*{box-sizing:border-box}body{margin:0;background:#f4f2ed;font-family:Arial,sans-serif;color:#171717}
+.wrap{min-height:100vh;display:flex;justify-content:center;padding:28px 12px}
+.card{width:min(100%,620px);background:#111;border-radius:28px;overflow:hidden;box-shadow:0 12px 35px #0003}
 .top{padding:22px 24px 18px;border-bottom:1px solid #b99a52;background:linear-gradient(135deg,#111,#252116)}
-.brand{display:flex;align-items:center;gap:13px}.logo{width:58px;height:58px;border-radius:50%;object-fit:cover;background:#fff}
-.brand h1{font-size:18px;margin:0;color:#d8b86a}.brand p{font-size:11px;margin:4px 0 0;letter-spacing:1px}
-.content{padding:24px}.photo{width:132px;height:164px;object-fit:cover;border-radius:12px;display:block;margin:0 auto 18px;background:#333}
-.label{font-size:10px;color:#b99a52;letter-spacing:1.5px;margin-top:12px}.value{font-size:16px;font-weight:700;margin-top:4px}.id{font-size:13px;color:#ddd}
+.brand{display:flex;align-items:center;gap:13px}.logo{width:58px;height:58px;border-radius:50%;object-fit:cover}
+.brand h1{font-size:18px;margin:0;color:#d8b86a;line-height:1.25}.brand p{font-size:11px;margin:4px 0 0;color:#fff;letter-spacing:1px}
+.content{padding:24px;color:#fff}.photo{width:132px;height:164px;object-fit:cover;border-radius:12px;display:block;margin:0 auto 18px;background:#333}
+.label{font-size:10px;color:#b99a52;letter-spacing:1.5px;margin-top:12px}.value{font-size:16px;font-weight:700;margin-top:4px}
+.status{display:inline-block;margin-top:10px;padding:5px 12px;border-radius:20px;background:#d8b86a;color:#111;font-size:11px;font-weight:700}
 .qr{width:112px;height:112px;background:#fff;padding:7px;margin:20px auto 4px;display:block}
 .footer{text-align:center;padding:14px;color:#b99a52;font-size:10px;letter-spacing:1px;border-top:1px solid #333}
-.status{display:inline-block;margin-top:10px;padding:5px 12px;border-radius:20px;background:#d8b86a;color:#111;font-size:11px;font-weight:bold}
-.note{text-align:center;font-size:11px;color:#666;margin-top:14px}
-</style></head>
-<body><div class="wrap"><div>
-<div class="card"><div class="top"><div class="brand">
+.loading,.error{text-align:center;padding:30px 0}.loading{color:#d8b86a}.error{color:#ffb3b3;line-height:1.5}.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+<div class="top"><div class="brand">
 <img class="logo" src="./WhatsApp%20Image%202026-09-28%20at%2011.23.37.jpeg" alt="Logo Samandiman">
 <div><h1>KAMPUNG PENGETAHUAN SAMANDIMAN</h1><p>BELAJAR • BERTUMBUH • MENGINSPIRASI</p></div>
-</div></div><div class="content">
-<img class="photo" src="https://kpsamandiman-art.github.io/samandiman-kartu/WhatsApp%20Image%202026-09-28%20at%2018.38.17.jpeg" alt="Foto anggota">
-<div class="label">NAMA ANGGOTA</div><div class="value">Reza Andik Setiawan</div>
-<div class="label">ID ANGGOTA</div><div class="value id">SMD-ANG-0001</div>
-<div class="label">STATUS</div><span class="status">AKTIF</span>
-<img class="qr" src="https://quickchart.io/qr?text=https%3A%2F%2Fsites.google.com%2Fview%2Fkampungpengetahuansamandiman%2Fkartu-anggota&size=180" alt="QR Kartu Anggota">
-</div><div class="footer">KARTU ANGGOTA DIGITAL • SAMANDIMAN</div></div>
-<div class="note">Prototype kartu anggota SMD-ANG-0001</div></div></div></body></html>
+</div></div>
+<div class="content">
+<div id="loading" class="loading">Memuat data anggota...</div>
+<div id="cardData" class="hidden">
+<img id="photo" class="photo" src="" alt="Foto anggota">
+<div class="label">NAMA ANGGOTA</div><div id="name" class="value"></div>
+<div class="label">ID ANGGOTA</div><div id="memberId" class="value"></div>
+<div class="label">STATUS</div><span id="status" class="status"></span>
+<img id="qr" class="qr" src="" alt="QR Code">
+</div>
+<div id="error" class="error hidden"></div>
+</div>
+<div class="footer">KARTU ANGGOTA DIGITAL • SAMANDIMAN</div>
+</div></div>
+<script>
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSor1lELpYlH8gooJr6QjVd8QCpBlXysVZCg8NIb_sWXvlJh4UFw-x3M6E6P1_WORdQJEygzsibdgWj/pub?gid=2261239&single=true&output=csv";
+function getId(){return(new URLSearchParams(location.search).get("id")||"").trim()}
+function parseCSV(t){let a=[],r=[],c="",q=false;for(let i=0;i<t.length;i++){let x=t[i],n=t[i+1];if(x=='"'){if(q&&n=='"'){c+='"';i++}else q=!q}else if(x==','&&!q){r.push(c);c=""}else if((x=='\n'||x=='\r')&&!q){if(x=='\r'&&n=='\n')i++;r.push(c);c="";if(r.some(v=>v.trim()))a.push(r);r=[]}else c+=x}if(c||r.length){r.push(c);if(r.some(v=>v.trim()))a.push(r)}return a}
+function error(m){document.getElementById("loading").classList.add("hidden");let e=document.getElementById("error");e.innerHTML=m;e.classList.remove("hidden")}
+async function load(){
+ const id=getId();if(!id){error("ID anggota belum diberikan.<br>Gunakan <b>?id=SMD-ANG-0001</b>");return}
+ try{
+  let res=await fetch(CSV_URL,{cache:"no-store"});if(!res.ok)throw Error("CSV tidak dapat diakses");
+  let rows=parseCSV(await res.text());if(rows.length<2)throw Error("Data anggota kosong");
+  let h=rows[0].map(x=>x.trim().toLowerCase()),ii=h.indexOf("id anggota"),inm=h.indexOf("nama lengkap"),ip=h.indexOf("foto"),is=h.indexOf("status");
+  if([ii,inm,ip,is].some(x=>x<0))throw Error("Kolom KARTU_PUBLIK belum sesuai");
+  let m=rows.slice(1).find(r=>(r[ii]||"").trim().toLowerCase()==id.toLowerCase());
+  if(!m){error("Anggota dengan ID <b>"+id+"</b> tidak ditemukan.");return}
+  document.getElementById("name").textContent=(m[inm]||"").trim();
+  document.getElementById("memberId").textContent=(m[ii]||"").trim();
+  document.getElementById("status").textContent=(m[is]||"AKTIF").trim();
+  document.getElementById("photo").src=(m[ip]||"").trim();
+  let u=location.origin+location.pathname+"?id="+encodeURIComponent(m[ii].trim());
+  document.getElementById("qr").src="https://quickchart.io/qr?size=220&text="+encodeURIComponent(u);
+  document.getElementById("loading").classList.add("hidden");document.getElementById("cardData").classList.remove("hidden");
+ }catch(e){error("Data kartu belum dapat dimuat.<br>"+e.message)}
+}
+load();
+</script>
+</body></html>
